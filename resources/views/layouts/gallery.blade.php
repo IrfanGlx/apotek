@@ -30,18 +30,25 @@ Jepret.id</a>
             </span>
           </div>
       </li>
-      <li class="nav-item">
-        <a class="nav-link active" href="{{ route('upload') }}"><i class="fa fa-upload" aria-hidden="true"></i> Upload</a>
-      </li>
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle active" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <span class="no-icon"><i class="fa fa-upload" aria-hidden="true"></i> Upload</span>
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+            <a class="dropdown-item" href="{{ route('upload') }}"><i class="fa fa-camera" aria-hidden="true"></i> Upload Photo</a>
+            <a class="dropdown-item" href="{{ route('upload') }}"><i class="fa fa-video-camera" aria-hidden="true"></i> Upload Video</a>
+        </div>
+    </li>
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle active" href="http://example.com" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <span class="no-icon">{{ Auth::user()->name }}</span>
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-            <a class="dropdown-item" href="{{ route('mygallery') }}">My Gallery</a>
+            <a class="dropdown-item" href="{{ route('mygallery') }}"><i class="fa fa-photo" aria-hidden="true"></i> My Gallery</a>
+            <a class="dropdown-item" href="{{ route('editprofile') }}"><i class="fa fa-pencil" aria-hidden="true"></i> Edit Profile</a>
             <a href="{{ route('logout') }}" class="dropdown-item"
             onclick="event.preventDefault();
-            document.getElementById('logout-form').submit();">Log Out <i class="fa fa-sign-out" aria-hidden="true"></i></a>
+            document.getElementById('logout-form').submit();"><i class="fa fa-sign-out" aria-hidden="true"></i> Log Out</a>
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                 {{ csrf_field() }}
             </form>

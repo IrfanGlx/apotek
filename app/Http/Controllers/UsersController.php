@@ -10,6 +10,8 @@ use DB;
 use App\Post;
 use App\Comment;
 use App\User;
+use App\Profile;
+use App\Followers;
 
 class UsersController extends Controller
 {
@@ -20,7 +22,7 @@ class UsersController extends Controller
      */
 public function __construct()
 {
-    $this->middleware('auth');
+  $this->middleware('auth');
 }
 
     /**
@@ -28,65 +30,120 @@ public function __construct()
      *
      * @return \Illuminate\Http\Response
      */
+    
     public function index()
     {
 
-        $data = [];
-        $data['photos'] = Post::orderBy('_id', 'desc')->get();
-        $data['listUsers'] = User::all();
+      $data = [];
+      $data['photos'] = Post::orderBy('_id', 'desc')->get();
+      $data['listUsers'] = User::all();
 
-        return view('Users.beranda', $data);
+      return view('Users.beranda', $data);
     }
     public function upload()
     {
-        return view('Users.upload');
+      return view('Users.upload');
     }
     public function post($id)
     {
-        $data['post'] = Post::where('_id', $id)->get();
-        $data['user'] = User::all();
-        $data['comment'] = Comment::where('idpost', $id)->orderBy('id', 'desc')->get();
+      $data['post'] = Post::where('_id', $id)->get();
+      $data['user'] = User::all();
+      $data['comment'] = Comment::where('idpost', $id)->orderBy('id', 'desc')->get();
       
-        return view('Users.item', $data);
+      return view('Users.item', $data);
 
     }
     public function commentAction(Request $r){
 
-           $comment = new Comment;
-           $comment->idpost = $r->idPost;
-           $comment->comment = $r->commentPost;
-           $comment->iduser = Auth::user()->id;
-           $comment->save();
+     $comment = new Comment;
+     $comment->idpost = $r->idPost;
+     $comment->comment = $r->commentPost;
+     $comment->iduser = Auth::user()->id;
+     $comment->save();
 
-           return redirect()->route('post', [$r->idPost]);
+     return redirect()->route('post', [$r->idPost]);
 
    }
-    public function mygallery()
-    {
-        $galeri['posts'] = Post::where('by', '=', Auth::user()->email)->get();
-        return view('Users.gallery', $galeri);
-    }
-    public function userGallery($by)
-    {
-        $post['photo'] = Post::where('by', '=', $by)->get();
+   public function mygallery()
+   {
+    $galeri['posts'] = Post::where('by', '=', Auth::user()->email)->get();
+    $galeri['followers'] = Followers::where('following', '=', Auth::user()->email)->get();
+    $galeri['following'] = Followers::where('nama', '=', Auth::user()->email)->get();
+    $galeri['profile'] = Profile::where('iduser', '=', Auth::user()->id)->get();
+    return view('Users.gallery', $galeri);
+  }
+  public function userGallery(Request $request, $by)
+  {
+    $post['photo'] = Post::where('by', '=', $by)->get();
+    $post['nama'] = User::where('email', '=', $by)->get();
+    $post['profile'] = Profile::where('iduser', '=', Auth::user()->id)->get();
+    return view('Users.usergallery', $post);
+  }
+  public function edit($id)
+  {
+    $post['photo'] = Post::where('_id', '=', $id)->get();
         // dd($post['photo']);
-        return view('Users.usergallery', $post);
-    }
-    public function uploadAction(Request $r){
-        $file = $r->file('picturePost');
+    return view('Users.edit', $post);
+  }
+  public function editAction(Request $r){
+    DB::table('posts')->where('_id', $r->input('idpost'))->update(
+      ['caption' => $r->input('captionPost'),
+      'description' => $r->input('descriptionPost'),
+      'work_location' => $r->input('work_location')
+      ]
+      );
+    return redirect()->route('mygallery');
 
-           $gambar = $file->getClientOriginalName();
-           $r->file('picturePost')->move(public_path('upload'), $gambar);        
+  }
+  public function uploadAction(Request $r){
+    $file = $r->file('picturePost');
 
-           $post = new Post;
-           $post->caption = $r->captionPost;
-           $post->description = $r->descriptionPost;
-           $post->file = $gambar;
-           $post->by = Auth::user()->email;
-           $post->save();
+    $gambar = $file->getClientOriginalName();
+    $r->file('picturePost')->move(public_path('upload'), $gambar);        
 
-           return redirect()->route('mygallery');
+    $post = new Post;
+    $post->caption = $r->captionPost;
+    $post->description = $r->descriptionPost;
+    $post->file = $gambar;
+    $post->by = Auth::user()->email;
+    $post->save();
 
-   }
-   
+    return redirect()->route('mygallery');
+
+  }
+  public function deletePost(Request $r){
+    $delete = Post::where('_id', $r->idpost)->delete();
+    $galeri['posts'] = Post::where('by', '=', Auth::user()->email)->get();
+    return redirect()->route('mygallery', $galeri);
+  }
+  public function editProfile(){
+    return view('Users.editprofile');
+  }
+  public function editProfileAction(Request $r){
+    $file = $r->file('photo');
+    $gambar = $file->getClientOriginalName();
+    $r->file('photo')->move(public_path('profiles'), $gambar);
+
+    $profile = new Profile;
+    $profile->iduser = $r->iduser;
+    $profile->photo = $gambar;
+    $profile->bio = $r->bio;
+    $profile->save();
+
+    return redirect()->route('mygallery');
+  }
+  public function followAction(Request $r){
+    $follow = new Followers;
+    $follow->nama = Auth::user()->email;
+    $follow->following = $r->following;
+    $follow->save();
+
+    return redirect()->route('index');
+  }
+  public function unfollowAction(Request $r){
+    $delete = Followers::where('nama', Auth::user()->email)->where('following', $r->following)->delete();
+
+    return redirect()->route('index');
+  }
+
 }
